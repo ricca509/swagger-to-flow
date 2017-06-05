@@ -1,8 +1,9 @@
 #!/usr/bin/env node
+
 const fetch = require('node-fetch')
 const swaggerToFlowTypes = require('./lib/swagger_to_flow_types')
 
-if(!Object.entries) {
+if (!Object.entries) {
 	require('object.entries').shim()
 }
 
@@ -20,14 +21,14 @@ fetch(argv.url)
 	.then((response) => response.json())
 	.then((json) => {
 		let data = []
-		if(json.definitions){
-			for(let [key, value] of Object.entries(json.definitions)){
+		if (json.definitions) {
+			for (let [key, value] of Object.entries(json.definitions)) {
 				data.push(`export type ${key} = ${processDefinition(key, value)}`)
 			}
 
 			console.log(data.join('\n\n'))
 
-		}else{
+		} else {
 			throw new Error('No swagger definitions to parse')
 		}
 	})
@@ -42,10 +43,10 @@ fetch(argv.url)
  * @param data
  * @return {string}
  */
-function processDefinition(name, data){
-	if(data.type == 'object') {
+function processDefinition(name, data) {
+	if (data.type == 'object') {
 		return `{\n\t${Object.entries(data.properties).map(([key, value]) => `${parsePropertyName(key)}: ${parsePropertyType(value)}`).join(',\n\t')}\n}`
-	}else{
+	} else {
 		throw new Error(`Unable to parse ${data.type} for ${name}`)
 	}
 }
@@ -55,16 +56,16 @@ function processDefinition(name, data){
  * @param type
  * @return {string}
  */
-function parsePropertyType(type){
-	if(type.type == 'array'){
-		if(type.items.type){
+function parsePropertyType(type) {
+	if (type.type == 'array') {
+		if (type.items.type) {
 			return `Array<${swaggerToFlowTypes[type.items.type]}>`
-		}else if(type.items['$ref']) {
+		} else if (type.items['$ref']) {
 			return `Array<${type.items['$ref'].replace('#/definitions/', '')}>`
 		}
-	}else if(!type.type && type["$ref"]){
+	} else if (!type.type && type["$ref"]) {
 		return type['$ref'].replace('#/definitions/', '')
-	}else{
+	} else {
 		return swaggerToFlowTypes[type.type]
 	}
 }
@@ -74,15 +75,15 @@ function parsePropertyType(type){
  * @param name
  * @return {string}
  */
-function parsePropertyName(name){
-	switch(argv.transformProperty){
+function parsePropertyName(name) {
+	switch (argv.transformProperty) {
 		case 'firstCaseLower':
-			if(!/[a-z]/.test(name)){ // Doesn't have a single lower case character, probably need to make the entire word lower case
+			if (!/[a-z]/.test(name)) { // Doesn't have a single lower case character, probably need to make the entire word lower case
 				return name.toLowerCase()
-			}else{
+			} else {
 				return name.charAt(0).toLowerCase() + name.slice(1)
 			}
 	}
 
-	return name11
+	return name;
 }
