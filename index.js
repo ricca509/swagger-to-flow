@@ -9,11 +9,10 @@ if (!Object.entries) {
 }
 
 const argv = require("yargs")
-  .usage("Usage: $0 -p [path]")
+  .usage("Usage: $0 -p [path] ")
   .alias("p", "path")
-  .alias("t", "transformProperty")
   .describe("p", "Path of swagger json file")
-  .describe("t", "transforms a property name")
+  .describe("transformProperty", "transforms a property name")
   .choices("transformProperty", ["normal", "firstCaseLower"])
   .default("transformProperty", "normal")
   .example("$0 -p ../swagger.json", "Reads the file from the disk")
@@ -21,7 +20,7 @@ const argv = require("yargs")
     "$0 -p http://petstore.swagger.io/v2/swagger.json",
     "Fetches the file from URL"
   )
-  .demandOption(["p"])
+  .demandOption("p")
   .help().argv;
 
 const isUrl = new RegExp("^(?:[a-z]+:)?//", "i");
@@ -30,8 +29,8 @@ isUrl.test(argv.path)
   ? fetchDefinitions(argv.path)
   : readDefinitions(argv.path);
 
-function readDefinitions(path) {
-  const json = fs.readFileSync(path, "utf-8");
+function readDefinitions(file) {
+  const json = fs.readFileSync(file, "utf-8");
   try {
     processDefinitions(JSON.parse(json));
   } catch (error) {
