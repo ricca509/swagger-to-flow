@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const fetch = require("node-fetch");
+const fs = require("fs");
 const swaggerToFlowTypes = require("./lib/swagger_to_flow_types");
 
 if (!Object.entries) {
@@ -8,30 +9,49 @@ if (!Object.entries) {
 }
 
 const argv = require("yargs")
-  .usage("Usage: $0 --url url_of_swagger.json")
-  .describe("url", "URL for the swagger json file")
+  .usage("swagger-to-flow -file [path] -url [url]")
+  .describe("file", "URL for the swagger json file")
   .describe("transformProperty", "transforms a property name")
   .choices("transformProperty", ["normal", "firstCaseLower"])
   .default("transformProperty", "normal")
-  .demand(["url"]).argv;
+  .help().argv;
 
-fetch(argv.url)
-  .then(response => response.json())
-  .then(json => {
-    let data = [];
-    if (json.definitions) {
-      for (let [key, value] of Object.entries(json.definitions)) {
-        data.push(`export type ${key} = ${processDefinition(key, value)}`);
-      }
+if (!argv.file && !argv.url) {
+  throw Error("no file or url");
+}
 
-      console.log(data.join("\n\n"));
-    } else {
-      throw new Error("No swagger definitions to parse");
+argv.file ? readDefinitions(argv.file) : fetchDefinitions(argv.url);
+
+function readDefinitions(path) {
+  const json = fs.readFileSync(path, "utf-8");
+  try {
+    processDefinitions(JSON.parse(json));
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+function fetchDefinitions(url) {
+  fetch(url)
+    .then(response => response.json())
+    .then(processDefinitions)
+    .catch(e => {
+      console.error(e.message);
+    });
+}
+
+function processDefinitions(json) {
+  let data = [];
+  if (json.definitions) {
+    for (let [key, value] of Object.entries(json.definitions)) {
+      data.push(`export type ${key} = ${processDefinition(key, value)}`);
     }
-  })
-  .catch(e => {
-    console.error(e.message);
-  });
+
+    console.log(data.join("\n\n"));
+  } else {
+    throw new Error("No swagger definitions to parse");
+  }
+}
 
 /**
  * Process the individual definition
