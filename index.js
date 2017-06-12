@@ -9,11 +9,17 @@ if (!Object.entries) {
 }
 
 const argv = require("yargs")
-  .usage("swagger-to-flow -file [path] -url [url]")
-  .describe("file", "URL for the swagger json file")
-  .describe("transformProperty", "transforms a property name")
+  .usage("Usage: $0 -f [path] -u [url]")
+  .alias("f", "file")
+  .alias("u", "url")
+  .alias("t", "transformProperty")
+  .describe("f", "Path of swagger json file")
+  .describe("u", "URL of swagger json file")
+  .describe("t", "transforms a property name")
   .choices("transformProperty", ["normal", "firstCaseLower"])
   .default("transformProperty", "normal")
+  .example("$0 -f ../swagger.json", "Reads the file from the disk")
+  .example("$0 -f http://test.com/swagger.json", "Fetches the file from URL")
   .help().argv;
 
 if (!argv.file && !argv.url) {
