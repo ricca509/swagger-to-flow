@@ -9,24 +9,26 @@ if (!Object.entries) {
 }
 
 const argv = require("yargs")
-  .usage("Usage: $0 -f [path] -u [url]")
-  .alias("f", "file")
-  .alias("u", "url")
+  .usage("Usage: $0 -p [path]")
+  .alias("p", "path")
   .alias("t", "transformProperty")
-  .describe("f", "Path of swagger json file")
-  .describe("u", "URL of swagger json file")
+  .describe("p", "Path of swagger json file")
   .describe("t", "transforms a property name")
   .choices("transformProperty", ["normal", "firstCaseLower"])
   .default("transformProperty", "normal")
-  .example("$0 -f ../swagger.json", "Reads the file from the disk")
-  .example("$0 -f http://test.com/swagger.json", "Fetches the file from URL")
+  .example("$0 -p ../swagger.json", "Reads the file from the disk")
+  .example(
+    "$0 -p http://petstore.swagger.io/v2/swagger.json",
+    "Fetches the file from URL"
+  )
+  .demandOption(["p"])
   .help().argv;
 
-if (!argv.file && !argv.url) {
-  throw Error("no file or url");
-}
+const isUrl = new RegExp("^(?:[a-z]+:)?//", "i");
 
-argv.file ? readDefinitions(argv.file) : fetchDefinitions(argv.url);
+isUrl.test(argv.path)
+  ? fetchDefinitions(argv.path)
+  : readDefinitions(argv.path);
 
 function readDefinitions(path) {
   const json = fs.readFileSync(path, "utf-8");
