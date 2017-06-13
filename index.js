@@ -3,7 +3,7 @@ const fetch = require("node-fetch");
 const fs = require("fs");
 const https = require("https");
 const changeCase = require("change-case");
-const DepGraph = require("dependency-graph").DepGraph;
+const { DepGraph } = require("dependency-graph");
 const swaggerToFlowTypes = require("./lib/swagger_to_flow_types");
 
 if (!Object.entries) {
