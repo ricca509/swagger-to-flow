@@ -52,6 +52,7 @@ function fetchDefinitions(url) {
   return fetch(url, options)
     .then(response => response.json())
     .then(processDefinitions)
+    .then(definitions => definitions.map(definition => console.log(definition)))
     .catch(e => {
       console.error(e.message);
     });
@@ -66,7 +67,7 @@ function processDefinitions(json) {
       data[name] = `export type ${name} = ${processDefinition(name, value)}`;
     }
 
-    graph.overallOrder().map(type => console.log(data[type]));
+    return ["// @flow", ...graph.overallOrder().map(type => data[type])];
   } else {
     throw new Error("No swagger definitions to parse");
   }
