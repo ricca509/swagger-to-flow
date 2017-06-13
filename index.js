@@ -10,12 +10,14 @@ if (!Object.entries) {
 }
 
 const argv = require("yargs")
-  .usage("Usage: $0 -p [path] ")
+  .usage("Usage: $0 -p [path] --insecure")
   .alias("p", "path")
   .describe("p", "Path of swagger json file")
   .describe("transformProperty", "transforms a property name")
+  .describe("insecure", "Ignore SSL errors")
   .choices("transformProperty", ["normal", "firstCaseLower"])
   .default("transformProperty", "normal")
+  .default("insecure", false)
   .example("$0 -p ../swagger.json", "Reads the file from the disk")
   .example(
     "$0 -p http://petstore.swagger.io/v2/swagger.json",
@@ -25,10 +27,9 @@ const argv = require("yargs")
   .help().argv;
 
 const isUrl = new RegExp("^(?:[a-z]+:)?//", "i");
+const { path, insecure, transformProperty } = argv;
 
-isUrl.test(argv.path)
-  ? fetchDefinitions(argv.path)
-  : readDefinitions(argv.path);
+isUrl.test(path) ? fetchDefinitions(path) : readDefinitions(path);
 
 function readDefinitions(file) {
   const json = fs.readFileSync(file, "utf-8");
@@ -41,7 +42,9 @@ function readDefinitions(file) {
 
 function fetchDefinitions(url) {
   const agent = new https.Agent({ rejectUnauthorized: false });
-  fetch(url, { agent })
+  const options = Object.assign({}, insecure && { agent });
+
+  return fetch(url, options)
     .then(response => response.json())
     .then(processDefinitions)
     .catch(e => {
@@ -50,7 +53,7 @@ function fetchDefinitions(url) {
 }
 
 function processDefinitions(json) {
-  let data = [];
+  let data = ["// @flow"];
   if (json.definitions) {
     for (let [key, value] of Object.entries(json.definitions)) {
       const name = getTypeName(key);
@@ -110,14 +113,12 @@ function parsePropertyType(type) {
  * @return {string}
  */
 function parsePropertyName(name) {
-  switch (argv.transformProperty) {
+  switch (transformProperty) {
     case "firstCaseLower":
-      if (!/[a-z]/.test(name)) {
-        // Doesn't have a single lower case character, probably need to make the entire word lower case
-        return name.toLowerCase();
-      } else {
-        return name.charAt(0).toLowerCase() + name.slice(1);
-      }
+      return !/[a-z]/.test(name)
+        ? // Doesn't have a single lower case character, probably need to make the entire word lower case
+          name.toLowerCase()
+        : changeCase.lowerCaseFirst(name);
   }
 
   return name;
