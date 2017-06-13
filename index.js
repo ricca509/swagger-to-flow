@@ -10,13 +10,15 @@ if (!Object.entries) {
 }
 
 const argv = require("yargs")
-  .usage("Usage: $0 -p [path] --insecure")
+  .usage("Usage: $0 -p [path] <options>")
   .alias("p", "path")
   .describe("p", "Path of swagger json file")
-  .describe("transformProperty", "transforms a property name")
-  .describe("insecure", "Ignore SSL errors")
+  .describe("transformProperty", "Transforms a property name")
+  .describe("insecure", "Ignores SSL errors")
+  .describe("changeTypeCase", "Changes type case to Pascal case")
   .choices("transformProperty", ["normal", "firstCaseLower"])
   .default("transformProperty", "normal")
+  .default("changeTypeCase", false)
   .default("insecure", false)
   .example("$0 -p ../swagger.json", "Reads the file from the disk")
   .example(
@@ -27,7 +29,7 @@ const argv = require("yargs")
   .help().argv;
 
 const isUrl = new RegExp("^(?:[a-z]+:)?//", "i");
-const { path, insecure, transformProperty } = argv;
+const { path, insecure, transformProperty, changeTypeCase } = argv;
 
 isUrl.test(path) ? fetchDefinitions(path) : readDefinitions(path);
 
@@ -125,5 +127,6 @@ function parsePropertyName(name) {
 }
 
 function getTypeName(type) {
-  return changeCase.pascalCase(type);
+  console.log(changeTypeCase, type);
+  return changeTypeCase ? changeCase.pascalCase(type) : type;
 }
