@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-
 const fetch = require("node-fetch");
 const fs = require("fs");
+const https = require("https");
+const changeCase = require("change-case");
 const swaggerToFlowTypes = require("./lib/swagger_to_flow_types");
 
 if (!Object.entries) {
@@ -39,7 +40,8 @@ function readDefinitions(file) {
 }
 
 function fetchDefinitions(url) {
-  fetch(url)
+  const agent = new https.Agent({ rejectUnauthorized: false });
+  fetch(url, { agent })
     .then(response => response.json())
     .then(processDefinitions)
     .catch(e => {
@@ -51,7 +53,8 @@ function processDefinitions(json) {
   let data = [];
   if (json.definitions) {
     for (let [key, value] of Object.entries(json.definitions)) {
-      data.push(`export type ${key} = ${processDefinition(key, value)}`);
+      const name = getTypeName(key);
+      data.push(`export type ${name} = ${processDefinition(name, value)}`);
     }
 
     console.log(data.join("\n\n"));
@@ -89,10 +92,13 @@ function parsePropertyType(type) {
     if (type.items.type) {
       return `Array<${swaggerToFlowTypes[type.items.type]}>`;
     } else if (type.items["$ref"]) {
-      return `Array<${type.items["$ref"].replace("#/definitions/", "")}>`;
+      return `Array<${getTypeName(
+        type.items["$ref"].replace("#/definitions/", "")
+      )}>`;
     }
   } else if (!type.type && type["$ref"]) {
-    return type["$ref"].replace("#/definitions/", "");
+    const ref = type["$ref"].replace("#/definitions/", "");
+    return getTypeName(ref);
   } else {
     return swaggerToFlowTypes[type.type];
   }
@@ -115,4 +121,8 @@ function parsePropertyName(name) {
   }
 
   return name;
+}
+
+function getTypeName(type) {
+  return changeCase.pascalCase(type);
 }
