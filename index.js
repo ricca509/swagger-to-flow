@@ -127,6 +127,5 @@ function parsePropertyName(name) {
 }
 
 function getTypeName(type) {
-  console.log(changeTypeCase, type);
   return changeTypeCase ? changeCase.pascalCase(type) : type;
 }
