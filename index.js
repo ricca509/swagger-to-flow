@@ -39,7 +39,8 @@ isUrl.test(path) ? fetchDefinitions(path) : readDefinitions(path);
 function readDefinitions(file) {
   const json = fs.readFileSync(file, "utf-8");
   try {
-    processDefinitions(JSON.parse(json));
+    const definitions = processDefinitions(JSON.parse(json));
+    printDefinitions(definitions);
   } catch (error) {
     console.log(error);
   }
@@ -52,7 +53,7 @@ function fetchDefinitions(url) {
   return fetch(url, options)
     .then(response => response.json())
     .then(processDefinitions)
-    .then(definitions => definitions.map(definition => console.log(definition)))
+    .then(printDefinitions)
     .catch(e => {
       console.error(e.message);
     });
@@ -71,6 +72,10 @@ function processDefinitions(json) {
   } else {
     throw new Error("No swagger definitions to parse");
   }
+}
+
+function printDefinitions(definitions) {
+  return definitions.map(definition => console.log(definition));
 }
 
 /**
